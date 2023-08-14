@@ -15,7 +15,6 @@ function NotebookEditor () {
     const params = useParams();
     const navigate = useNavigate();
 
-
     // Fetch content from database
     useEffect(() => {
         async function fetchData() {
@@ -41,9 +40,6 @@ function NotebookEditor () {
         fetchData();
         return;
     }, [params.id, navigate]);
-
-    // Function to update database
-
 
     // Constantly call updateData - debounces so it's called one second after you finish typing
     useEffect(() => {
@@ -74,10 +70,49 @@ function NotebookEditor () {
         });
     } 
 
-    return (
-        <div>
-            <h1>{notebookInfo.title}</h1>
+    const summarize = async (e) => {
+        e.preventDefault();
+        var selection = "";
+        if (window.getSelection) {
+            selection = window.getSelection().toString();
+        } else if (document.selection && document.selection.type !== "Control") {
+            selection = document.selection.createRange().text;
+        }
+        if (selection !== "") {
+            const formData = new FormData();
+            formData.append('text', selection)
+            const response = await fetch("http://127.0.0.1:5000/summarize", {
+                method: "POST",
+                body: formData,
+            });
+            const output = await response.json();
+            var sel = window.getSelection();
+            var range = sel.getRangeAt(0);
+            range.deleteContents();
+            range.insertNode(document.createTextNode(output));
+        }
+        else {
+            alert("No text selected");
+        }
+    }
 
+    const transcribe = async (e) => {
+
+    }
+
+    return (
+        <div style={{"padding": "10px 30px 30px 30px"}}>
+            <div style={{"display": "flex", "justifyContent": 'space-between'}}>
+                <h2>{notebookInfo.title}</h2>
+                <div style={{"display": "flex"}}>
+                    <button style={{"marginRight": "15px", "width": "150px", "height": "35px"}} onClick={transcribe}>
+                        Transcribe
+                    </button>
+                    <button style={{"width": "150px", "height": "35px"}} onClick={summarize}>
+                        Generate Notes
+                    </button>
+                </div>
+            </div>
             <ReactQuill style={{"height": "70vh"}} theme="snow" value={notebookInfo.content} onChange={getQuillData}/>
         </div>
     )

@@ -1,13 +1,13 @@
-from flask import Flask, jsonify, request, send_file
-from flask_restful import Resource, Api, reqparse
-import base64
-from io import BytesIO
+from flask import Flask, jsonify, request
+from flask_restful import Resource, Api
 import openai
 import os
+from flask_cors import CORS
 
 
 # Create flask app
 app = Flask(__name__)
+CORS(app)
 # Create flask api object
 api = Api(app)
 
@@ -17,35 +17,21 @@ openai.api_key = os.getenv("OPENAI_API_KEY")
 # Summarize endpoint: used to generate notes for the input text
 class Summarize(Resource):
     prompt = """
-    Given a lecture transcript, execute the following steps to transform the content into structured and impactful typed notes, integrating an adapted version of the Cornell Method's "cues" system:
-    
-    Structured Outlining:
-    Primary Topics: Begin by identifying overarching themes or primary topics from the transcript.
-    Related Sub-topics: For each primary topic, extract relevant sub-topics or key ideas that delve into the main theme.
-    Specific Details: Under each sub-topic, detail the essential points or examples that provide clarity and context.
-    
-    Cues System Adaptation:
-    Next to each primary topic and related sub-topic, provide a short cue or keyword in a distinct font or color. This will act as a quick reference point or trigger for the content and facilitate rapid scanning and recollection.
-    
-    Highlighting, Formatting, and Flagging:
-    Emphasize essential points with bold or italic font styles.
-    Use bullet points or numbered lists for sequential information or steps.
-    Create a visual hierarchy using varying font sizes or subtle color differences between the primary topics, sub-topics, and specific details.
-    If the transcript mentions that a particular point is of high importance, or that it will be on a test, flag that section with a distinct marker or icon for special attention.
-    
-    Linking and Cross-referencing:
-    Whenever the transcript references earlier or later sections, create internal links or notes, ensuring that the content remains interconnected. This method promotes holistic comprehension and allows for effortless navigation between related content.
-    
-    Concluding Summaries:
-    After every primary topic, craft a concise summary that encapsulates the main ideas and the connected sub-topics explored under that header. This brief recap will give readers an overview of the content and solidify crucial takeaways.
-    Process the transcript employing these techniques to yield notes that are not only well-organized and optimized for learning but also prioritize and highlight the most critical content as flagged by the lecturer.
+    Please generate detailed and structured lecture notes based on the content provided. Ensure the notes have the following structure:
+
+    Each main topic should be highlighted with a sub-heading.
+    Under each main topic, provide sub-topics or key points as bullet points.
+    Include at least 3 levels of sub-bullets for deeper explanation or further breakdown of each sub-topic.
+    Reinforce or expand upon main points with direct quotes from the lecture where they serve to offer deeper insights. Quotes should be used sparingly and integrated as sub-bullets.
+    Aim for comprehensive coverage without over-summarizing. The final notes should allow someone unfamiliar with the lecture to grasp the key concepts and their significance.
+    Please write in English language.
     """
 
     def post(self):
         input = request.form['text']
 
         messages = []
-        messages.append({"role": "system", "content": "You are an advanced note taking AI. Your job is to take text and format it into college-style notes that can summarizes key points and can be used to study the material."})
+        messages.append({"role": "system", "content": self.prompt})
 
         question = {}
         question['role'] = 'user'
